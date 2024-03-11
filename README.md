@@ -22,3 +22,4 @@ CREATE TABLE IF NOT EXISTS characters (
     roles text[] NOT NULL
 );
 ```
+## Amirgali Sanjar 22B030621
