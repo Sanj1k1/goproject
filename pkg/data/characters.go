@@ -1,6 +1,8 @@
 package data
 
 import (
+	"fmt"
+	"context" 
 	"database/sql"
 	"errors"
 	"time"
@@ -43,7 +45,9 @@ func (c MockCharacterModel) Insert(character *Character) error {
 
 	args := []interface{}{character.Name, character.Health, character.MoveSpeed, character.Mana, pq.Array(character.Roles)}
 
-	return c.DB.QueryRow(query, args...).Scan(&character.ID, &character.CreatedAt)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	return c.DB.QueryRowContext(ctx,query, args...).Scan(&character.ID, &character.CreatedAt)
 }
 
 
@@ -51,13 +55,20 @@ func (c MockCharacterModel) Get(id int64) (*Character, error) {
 	if id < 1 {
 		return nil, ErrRecordNotFound
 	}
+
 	query := `
 	SELECT id, created_at, names,health,movespeed,mana,roles
 	FROM characters
 	WHERE id = $1`
+
 	var character Character
 
-	err := c.DB.QueryRow(query, id).Scan(
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+
+	defer cancel()
+
+	err := c.DB.QueryRowContext(ctx,query, id).Scan(
+		&[]byte{},
 		&character.ID,
 		&character.CreatedAt,
 		&character.Name,
@@ -92,6 +103,19 @@ func (c MockCharacterModel) Update(character *Character) error {
 		character.Mana,
 		pq.Array(character.Roles),
 		character.ID,
+	}	
+	
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := c.DB.QueryRowContext(ctx,query, args...).Scan(&character.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		return ErrEditConflict
+		default:
+		return err
+		}
 	}
 
 	return c.DB.QueryRow(query, args...).Scan(&character.Roles)
@@ -107,7 +131,10 @@ func (c MockCharacterModel) Delete(id int64) error {
 	DELETE FROM characters
 	WHERE id = $1`
 
-	result, err := c.DB.Exec(query, id)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := c.DB.ExecContext(ctx,query, id)
 	if err != nil {
 		return err
 	}
@@ -121,4 +148,57 @@ func (c MockCharacterModel) Delete(id int64) error {
 		return ErrRecordNotFound
 	}
 	return nil
+}
+
+func (c MockCharacterModel) GetAll(Name string, Roles []string, filters Filters) ([]*Character,Metadata, error) {
+	query := fmt.Sprintf(`
+		SELECT count(*) OVER(),id, created_at, names, health, movespeed, mana,roles
+		FROM characters
+		WHERE (to_tsvector('simple', names) @@ plainto_tsquery('simple', $1) OR $1 = '')
+		AND (roles @> $2 OR $2 = '{}')
+		ORDER BY %s %s, id ASC LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	args := []interface{}{Name, pq.Array(Roles), filters.limit(), filters.offset()}
+
+	rows, err := c.DB.QueryContext(ctx, query,args...)
+	if err != nil {
+		return nil,Metadata{}, err
+	}
+
+	defer rows.Close()
+
+	totalRecords := 0
+	characters := []*Character{}
+
+	for rows.Next() {
+
+		var character Character
+		
+		err := rows.Scan(
+			&totalRecords,
+			&character.ID,
+			&character.CreatedAt,
+			&character.Name,
+			&character.Health,
+			&character.MoveSpeed,
+			&character.Mana,
+			pq.Array(&character.Roles),
+		)
+		if err != nil {
+			return nil, Metadata{},err
+		}
+		
+		characters = append(characters, &character)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, Metadata{} ,err
+	}
+
+	metadata := calculateMetadata(totalRecords, filters.Page, filters.PageSize)
+
+	return characters, metadata,nil
 }
