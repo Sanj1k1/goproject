@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"time"
-
+	"goproject/pkg/validator"
 	"github.com/lib/pq"
 )
 
@@ -16,6 +16,18 @@ type Character struct {
 	MoveSpeed int32     `json:"movespeed"`
 	Mana      int32     `json:"mana"`
 	Roles     []string  `json:"roles"`
+}
+
+func ValidateCharacter(v *validator.Validator, character *Character) {
+	v.Check(character.Name != "", "Name", "must be provided")
+	v.Check(len(character.Name) <= 500, "Name", "must not be more than 500 bytes long")
+	v.Check(character.Health != 0, "Health", "must be provided")
+	v.Check(character.Health > 0, "Health", "must be greater than 0")
+	v.Check(character.MoveSpeed != 0, "MoveSpeed", "must be provided")
+	v.Check(character.MoveSpeed > 0, "MoveSpeed", "must be a positive integer")
+	v.Check(character.Roles != nil, "Roles", "must be provided")
+	v.Check(len(character.Roles) >= 1, "Roles", "must contain at least 1 genre")
+	v.Check(validator.Unique(character.Roles), "genres", "must not contain duplicate values")
 }
 
 type MockCharacterModel struct {

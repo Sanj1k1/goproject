@@ -3,6 +3,7 @@ package main
 import (
 	"errors" // New import
 	"fmt"
+	"goproject/pkg/validator"
 	"goproject/pkg/data"
 	"net/http"
 )
@@ -30,6 +31,13 @@ func (app *application) createCharacterHandler(w http.ResponseWriter, r *http.Re
 		MoveSpeed: input.MoveSpeed,
 		Mana:      input.Mana,
 		Roles:     input.Roles,
+	}
+
+	v := validator.New()
+
+	if data.ValidateCharacter(v, character); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
 	}
 
 	err = app.models.Characters.Insert(character)
