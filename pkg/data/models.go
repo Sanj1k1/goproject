@@ -19,10 +19,14 @@ type Models struct {
 		Delete(id int64) error
 		GetAll(Name string, Roles []string, filters Filters) ([]*Character, Metadata,error)
 	}
+	Users UserModel 
+	Tokens TokenModel
 }
 
 func NewModels(db *sql.DB) Models {
 	return Models{
 		Characters: MockCharacterModel{DB: db},
+		Tokens: TokenModel{DB: db},
+		Users: UserModel{DB: db},
 	}
 }
