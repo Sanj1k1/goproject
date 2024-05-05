@@ -68,7 +68,6 @@ func (c MockCharacterModel) Get(id int64) (*Character, error) {
 	defer cancel()
 
 	err := c.DB.QueryRowContext(ctx,query, id).Scan(
-		&[]byte{},
 		&character.ID,
 		&character.CreatedAt,
 		&character.Name,

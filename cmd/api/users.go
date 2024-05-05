@@ -1,7 +1,6 @@
 package main
 import (
 	"errors"
-	"fmt"
 	"time"
 	"net/http"
 	"goproject/pkg/data"
@@ -32,39 +31,13 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		app.serverErrorResponse(w, r, err)
 		return
 	}
+	
 	v := validator.New()
 
 	if data.ValidateUser(v, user); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
-
-	go func() {
-	err = app.mailer.Send(user.Email, "user_welcome.tmpl", user)
-	if err != nil {
-		app.logger.PrintError(err, nil)
-	}
-	}()
-
-	go func() {
-	defer func() {
-		if err := recover(); err != nil {
-			app.logger.PrintError(fmt.Errorf("%s", err), nil)
-		}
-	}()
-	err = app.mailer.Send(user.Email, "user_welcome.tmpl", user)
-	if err != nil {
-		app.logger.PrintError(err, nil)
-	}
-	}()
-
-	app.background(func() {
-		err = app.mailer.Send(user.Email, "user_welcome.tmpl", user)
-		if err != nil {
-		app.logger.PrintError(err, nil)
-		}
-	})
-
 
 	err = app.models.Users.Insert(user)
 	if err != nil {
@@ -75,6 +48,12 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 			default:
 				app.serverErrorResponse(w, r, err)
 		}
+		return
+	}
+
+	err = app.models.Permissions.AddForUser(user.ID, "characters:read")
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
@@ -90,10 +69,10 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		"userID": user.ID,
 	}
 	
-	err = app.mailer.Send(user.Email, "user_welcome.tmpl", data)
-	if err != nil {
-		app.logger.PrintError(err, nil)
-	}
+		err = app.mailer.Send(user.Email, "user_welcome.tmpl", data)
+		if err != nil {
+			app.logger.PrintError(err, nil)
+		}
 	})
 
 	err = app.writeJSON(w, http.StatusAccepted, envelope{"user": user}, nil)

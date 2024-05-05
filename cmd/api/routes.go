@@ -13,11 +13,11 @@ func (app *application) routes() http.Handler {
 
 	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthcheckHandler)
 	
-	router.HandlerFunc(http.MethodGet, "/v1/characters", app.listCharactersHandler)
-	router.HandlerFunc(http.MethodPost, "/v1/characters", app.createCharacterHandler)
-	router.HandlerFunc(http.MethodGet, "/v1/characters/:id", app.showCharacterHandler)
-	router.HandlerFunc(http.MethodPatch, "/v1/characters/:id", app.updateCharacterHandler)
-	router.HandlerFunc(http.MethodDelete, "/v1/characters/:id", app.deleteCharacterHandler)
+	router.HandlerFunc(http.MethodGet, "/v1/characters", app.requirePermission("characters:read",app.listCharactersHandler))
+	router.HandlerFunc(http.MethodPost, "/v1/characters", app.requirePermission("characters:write",app.createCharacterHandler))
+	router.HandlerFunc(http.MethodGet, "/v1/characters/:id", app.requirePermission("characters:read",app.showCharacterHandler))
+	router.HandlerFunc(http.MethodPatch, "/v1/characters/:id", app.requirePermission("characters:write",app.updateCharacterHandler))
+	router.HandlerFunc(http.MethodDelete, "/v1/characters/:id", app.requirePermission("characters:write",app.deleteCharacterHandler))
 	
 	router.HandlerFunc(http.MethodPost, "/v1/users", app.registerUserHandler)
 	router.HandlerFunc(http.MethodPut, "/v1/users/activated", app.activateUserHandler)

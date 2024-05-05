@@ -21,11 +21,13 @@ type Models struct {
 	}
 	Users UserModel 
 	Tokens TokenModel
+	Permissions PermissionModel
 }
 
 func NewModels(db *sql.DB) Models {
 	return Models{
 		Characters: MockCharacterModel{DB: db},
+		Permissions: PermissionModel{DB: db}, 
 		Tokens: TokenModel{DB: db},
 		Users: UserModel{DB: db},
 	}
