@@ -19,6 +19,12 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc(http.MethodPatch, "/v1/characters/:id", app.requirePermission("characters:write",app.updateCharacterHandler))
 	router.HandlerFunc(http.MethodDelete, "/v1/characters/:id", app.requirePermission("characters:write",app.deleteCharacterHandler))
 	
+	router.HandlerFunc(http.MethodPost, "/v1/players", app.createPlayerHandler)
+	router.HandlerFunc(http.MethodGet, "/v1/players/:id", app.showPlayerHandler)
+	router.HandlerFunc(http.MethodPut, "/v1/players/:id", app.updatePlayerHandler)
+	router.HandlerFunc(http.MethodDelete, "/v1/players/:id", app.deletePlayerHandler)
+
+
 	router.HandlerFunc(http.MethodPost, "/v1/users", app.registerUserHandler)
 	router.HandlerFunc(http.MethodPut, "/v1/users/activated", app.activateUserHandler)
 	router.HandlerFunc(http.MethodPut, "/v1/users/password", app.updateUserPasswordHandler)

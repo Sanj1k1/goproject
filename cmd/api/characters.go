@@ -174,6 +174,7 @@ func (app *application) deleteCharacterHandler(w http.ResponseWriter, r *http.Re
 		}
 		return
 	}
+	
 	err = app.writeJSON(w, http.StatusOK, envelope{"message": "character successfully deleted"}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)

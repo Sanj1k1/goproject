@@ -19,6 +19,12 @@ type Models struct {
 		Delete(id int64) error
 		GetAll(Name string, Roles []string, filters Filters) ([]*Character, Metadata,error)
 	}
+	Players interface{
+		Insert(player *Player) error
+		Get(playerid int64) (*Player, error)
+		Update(player *Player) error
+		Delete(playerid int64) error
+	}
 	Users UserModel 
 	Tokens TokenModel
 	Permissions PermissionModel
@@ -27,6 +33,7 @@ type Models struct {
 func NewModels(db *sql.DB) Models {
 	return Models{
 		Characters: MockCharacterModel{DB: db},
+		Players: MockPlayerModel{DB: db},
 		Permissions: PermissionModel{DB: db}, 
 		Tokens: TokenModel{DB: db},
 		Users: UserModel{DB: db},

@@ -29,7 +29,7 @@ func ValidateCharacter(v *validator.Validator, character *Character) {
 	v.Check(character.MoveSpeed > 0, "MoveSpeed", "must be a positive integer")
 	v.Check(character.Roles != nil, "Roles", "must be provided")
 	v.Check(len(character.Roles) >= 1, "Roles", "must contain at least 1 genre")
-	v.Check(validator.Unique(character.Roles), "genres", "must not contain duplicate values")
+	v.Check(validator.Unique(character.Roles), "Roles", "must not contain duplicate values")
 }
 
 type MockCharacterModel struct {
