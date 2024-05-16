@@ -94,7 +94,7 @@ func (c MockCharacterModel) Update(character *Character) error {
 	UPDATE characters
 	SET names = $1, health = $2, movespeed = $3, mana = $4,roles=$5
 	WHERE id = $6
-	RETURNING *`
+	RETURNING id, created_at, names, health, movespeed, mana, roles`
 	args := []interface{}{
 		character.Name,
 		character.Health,
@@ -107,18 +107,26 @@ func (c MockCharacterModel) Update(character *Character) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := c.DB.QueryRowContext(ctx,query, args...).Scan(&character.ID)
+	err := c.DB.QueryRowContext(ctx, query, args...).Scan(
+		&character.ID,
+		&character.CreatedAt,
+		&character.Name,
+		&character.Health,
+		&character.MoveSpeed,
+		&character.Mana,
+		pq.Array(&character.Roles), 
+	)
+
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-		return ErrEditConflict
+			return ErrEditConflict
 		default:
-		return err
+			return err
 		}
 	}
 
-	return c.DB.QueryRow(query, args...).Scan(&character.Roles)
-
+	return nil 
 }
 
 func (c MockCharacterModel) Delete(id int64) error {
