@@ -3,7 +3,7 @@ This is a RESTful API built in Go that allows you to manage Dota 2 databases. It
 
 # API Endpoints
 ## Healthcheck
-+ `GET /v1/health` - Checks the health of the API.
++ `GET /v1/healthcheck` - Checks the health of the API.
 ## Characters
 + `GET /v1/characters` - Retrieves characters.
 + `POST /v1/characters` - Creates character.
@@ -12,10 +12,10 @@ This is a RESTful API built in Go that allows you to manage Dota 2 databases. It
 + `DELETE /v1/characters/:id` - DELETES a character by ID.
 ## Players
 + `GET /v1/players` - Retrieves players.
-+ `POST /v1/players` - Creates character.
-+ `GET /v1/players/:id` - Retrieves a character by ID.
-+ `PUT /v1/players/:id` - Updates a character by ID.
-+ `DELETE /v1/players/:id` - DELETES a character by ID.
++ `POST /v1/players` - Creates player.
++ `GET /v1/players/:id` - Retrieves a player by ID.
++ `PUT /v1/players/:id` - Updates a player by ID.
++ `DELETE /v1/players/:id` - DELETES a player by ID.
 # Database Structure 
 Characters 
 ```
