@@ -87,20 +87,20 @@ func (app *application) updatePlayerHandler(w http.ResponseWriter, r *http.Reque
 	player, err := app.models.Players.Get(playerid)
 	if err != nil {
 		switch {
-			case errors.Is(err, data.ErrRecordNotFound):
-				app.notFoundResponse(w, r)
-			default:
-				app.serverErrorResponse(w, r, err)
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
 		}
 		return
 	}
 
 	var input struct {
-		Nickname 	string	`json:"nicknames"`
-		MMR 	int32	`json:"mmr"`
-		WinRate  int64	`json:"winrate"`
-		TotalMatches	int64	`json:"totalmatches"`
-		Roles     []string  `json:"roles"`	
+		Nickname     *string  `json:"nicknames"`
+		MMR          *int32   `json:"mmr"`
+		WinRate      *int64   `json:"winrate"`
+		TotalMatches *int64   `json:"totalmatches"`
+		Roles        []string `json:"roles"`
 	}
 
 	err = app.readJSON(w, r, &input)
@@ -108,12 +108,22 @@ func (app *application) updatePlayerHandler(w http.ResponseWriter, r *http.Reque
 		app.badRequestResponse(w, r, err)
 		return
 	}
-	
-	player.Nickname = input.Nickname
-	player.MMR = input.MMR
-	player.WinRate = input.WinRate
-	player.TotalMatches = input.TotalMatches
-	player.Roles = input.Roles
+
+	if input.Nickname != nil {
+		player.Nickname = *input.Nickname 
+	}
+	if input.MMR != nil {
+		player.MMR = *input.MMR 
+	}
+	if input.WinRate != nil {
+		player.WinRate = *input.WinRate 
+	}
+	if input.TotalMatches != nil {
+		player.TotalMatches = *input.TotalMatches 
+	}
+	if input.Roles != nil {
+		player.Roles = input.Roles 
+	}
 
 	v := validator.New()
 	if data.ValidatePlayer(v, player); !v.Valid() {
@@ -123,7 +133,12 @@ func (app *application) updatePlayerHandler(w http.ResponseWriter, r *http.Reque
 
 	err = app.models.Players.Update(player)
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
+		switch {
+			case errors.Is(err, data.ErrEditConflict):
+				app.editConflictResponse(w, r)
+			default:
+				app.serverErrorResponse(w, r, err)
+		}
 		return
 	}
 

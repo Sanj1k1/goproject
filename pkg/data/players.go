@@ -1,11 +1,13 @@
 package data
 
 import (
-	"database/sql" 
-	"time"
+	"context"
+	"database/sql"
+	"errors"
 	"goproject/pkg/validator"
-	"github.com/lib/pq" 
-	"errors" 
+	"time"
+
+	"github.com/lib/pq"
 )
 
 type Player struct {
@@ -45,7 +47,9 @@ func (p MockPlayerModel) Insert(player *Player) error {
 	
 	args := []interface{}{player.Nickname, player.MMR, player.WinRate,player.TotalMatches, pq.Array(player.Roles)}
 
-	return p.DB.QueryRow(query, args...).Scan(&player.PlayerID, &player.CreatedAt)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	return p.DB.QueryRowContext(ctx,query, args...).Scan(&player.PlayerID, &player.CreatedAt)
 }
 
 func (p MockPlayerModel) Get(playerid int64) (*Player, error) {
@@ -60,7 +64,11 @@ func (p MockPlayerModel) Get(playerid int64) (*Player, error) {
 
 	var player Player
 
-	err := p.DB.QueryRow(query, playerid).Scan(
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+
+	defer cancel()
+
+	err := p.DB.QueryRowContext(ctx,query, playerid).Scan(
 		&player.PlayerID,
 		&player.CreatedAt,
 		&player.Nickname,
@@ -97,8 +105,29 @@ func (p MockPlayerModel) Update(player *Player) error {
 		pq.Array(player.Roles),
 		player.PlayerID,
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := p.DB.QueryRowContext(ctx,query, args...).Scan(
+		&player.PlayerID,
+		&player.CreatedAt,
+		&player.Nickname,
+		&player.MMR,
+		&player.WinRate,
+		&player.TotalMatches,
+		pq.Array(&player.Roles),
+	)
 	
-	return p.DB.QueryRow(query, args...).Scan(&player.PlayerID, &player.CreatedAt, &player.Nickname, &player.MMR, &player.WinRate, &player.TotalMatches, pq.Array(&player.Roles))
+	if err != nil {
+		switch {
+			case errors.Is(err, sql.ErrNoRows):
+				return ErrEditConflict
+			default:
+				return err
+		}
+	}
+	return nil
 }
 
 func (p MockPlayerModel) Delete(playerid int64) error {
@@ -109,8 +138,11 @@ func (p MockPlayerModel) Delete(playerid int64) error {
 	query := `
 	DELETE FROM players
 	WHERE playerid = $1`
+	
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
-	result, err := p.DB.Exec(query, playerid)
+	result, err := p.DB.ExecContext(ctx,query, playerid)
 	if err != nil {
 		return err
 	}
