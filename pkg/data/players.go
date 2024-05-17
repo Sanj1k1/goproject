@@ -6,7 +6,7 @@ import (
 	"errors"
 	"goproject/pkg/validator"
 	"time"
-
+	"fmt" 
 	"github.com/lib/pq"
 )
 
@@ -157,4 +157,59 @@ func (p MockPlayerModel) Delete(playerid int64) error {
 	}
 	
 	return nil
+}
+
+func (p MockPlayerModel) GetAll(Nickname string, Roles []string, filters Filters) ([]*Player,Metadata,error) {
+	query :=  fmt.Sprintf(`
+		SELECT count(*) OVER(), playerid, created_at, nicknames, mmr, winrate, totalmatches, roles
+		FROM players
+		WHERE (to_tsvector('simple', nicknames) @@ plainto_tsquery('simple', $1) OR $1 = '')		
+		AND (roles @> $2 OR $2 = '{}')
+		ORDER BY %s %s, playerid ASC 
+		LIMIT $3 OFFSET $4`,filters.sortColumn(), filters.sortDirection())
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	args := []interface{}{Nickname, pq.Array(Roles), filters.limit(), filters.offset()}
+
+	rows, err := p.DB.QueryContext(ctx, query,args...)
+	if err != nil {
+		return nil, Metadata{}, err
+	}
+
+	defer rows.Close()
+
+	totalRecords := 0
+	players := []*Player{}
+
+	for rows.Next() {
+
+		var player Player
+
+		err := rows.Scan(
+			&totalRecords,
+			&player.PlayerID,
+			&player.CreatedAt,
+			&player.Nickname,
+			&player.MMR,
+			&player.WinRate,
+			&player.TotalMatches,
+			pq.Array(&player.Roles),
+		)
+		if err != nil {
+			return nil,Metadata{}, err
+		}
+	
+
+		players = append(players, &player)
+	}
+	
+	if err = rows.Err(); err != nil {
+		return nil,Metadata{},err
+	}
+	
+	metadata := calculateMetadata(totalRecords, filters.Page, filters.PageSize)
+
+	return players, metadata, nil
 }

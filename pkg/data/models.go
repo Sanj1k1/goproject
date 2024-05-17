@@ -24,6 +24,7 @@ type Models struct {
 		Get(playerid int64) (*Player, error)
 		Update(player *Player) error
 		Delete(playerid int64) error
+		GetAll(Nickname string, Roles []string, filters Filters) ([]*Player,Metadata,error)
 	}
 	Users UserModel 
 	Tokens TokenModel

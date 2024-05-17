@@ -170,5 +170,41 @@ func (app *application) deletePlayerHandler(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
+}
+
+func (app *application) listPlayersHandler(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Nickname string
+		Roles []string
+		data.Filters
+	}
+
+	v := validator.New()
+
+	qs := r.URL.Query()
+
+	input.Nickname = app.readString(qs, "nicknames", "")
+	input.Roles = app.readCSV(qs, "roles", []string{})
+
+	input.Filters.Page = app.readInt(qs, "page", 1, v)
+	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
+
+	input.Filters.Sort = app.readString(qs, "sort", "playerid")
+	input.Filters.SortSafelist = []string{"playerid", "nicknames", "mmr", "winrate","totalmatches", "-playerid", "-nicknames", "-mmr", "-winrate","totalmatches"}
+
+	if data.ValidateFilters(v, input.Filters); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
 	}
 	
+	players, metadata,err := app.models.Players.GetAll(input.Nickname, input.Roles, input.Filters)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"players": players,"metadata":metadata}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}
