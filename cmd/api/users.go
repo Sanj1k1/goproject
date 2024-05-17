@@ -6,6 +6,7 @@ import (
 	"goproject/pkg/data"
 	"goproject/pkg/validator"
 )
+
 func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	var input struct {
@@ -52,6 +53,12 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	err = app.models.Permissions.AddForUser(user.ID, "characters:read")
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	err = app.models.Permissions.AddForUser(user.ID, "players:read")
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return

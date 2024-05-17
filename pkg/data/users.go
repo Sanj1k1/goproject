@@ -16,13 +16,13 @@ var (
 var AnonymousUser = &User{}
 
 type User struct {
-	ID int64 `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	Name string `json:"name"`
-	Email string `json:"email"`
-	Password password `json:"-"`
-	Activated bool `json:"activated"`
-	Version int `json:"-"`
+	ID 			int64 		`json:"id"`
+	CreatedAt 	time.Time 	`json:"created_at"`
+	Name 		string 		`json:"name"`
+	Email 		string 		`json:"email"`
+	Password 	password 	`json:"-"`
+	Activated 	bool 		`json:"activated"`
+	Version 	int 		`json:"-"`
 }
 
 func (u *User) IsAnonymous() bool {
@@ -200,4 +200,3 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error)
 	}
 	return &user, nil
 }
-

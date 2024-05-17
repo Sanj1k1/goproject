@@ -11,4 +11,6 @@ CREATE TABLE IF NOT EXISTS users_permissions (
 INSERT INTO permissions (code)
 VALUES
 ('characters:read'),
-('characters:write');
+('characters:write'),
+('players:read'),
+('players:write');
