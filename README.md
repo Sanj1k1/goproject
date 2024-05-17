@@ -1,6 +1,5 @@
 # Dota API
-This is a RESTful API built in Go that allows you to manage Dota 2 databases. It uses the Gorilla Mux router and JSON for request and response bodies.
-
+The Dota 2 API provides developers with access to data and functionalities of the Dota 2 game, enabling the creation of applications and services related to the Dota 2 universe. The API offers endpoints for retrieving information about characters, players, as well as the ability to create and update data. With this API, developers can integrate character and player information into their applications, as well as automate data management processes within the game.
 ## Team Members
 Amirgali Sanjar 22B030621
 
