@@ -1,6 +1,9 @@
 # Dota API
 This is a RESTful API built in Go that allows you to manage Dota 2 databases. It uses the Gorilla Mux router and JSON for request and response bodies.
 
+## Team Members
+Amirgali Sanjar 22B030621
+
 # API Endpoints
 ## Healthcheck
 + `GET /v1/healthcheck` - Checks the health of the API.
@@ -53,4 +56,3 @@ CREATE TABLE IF NOT EXISTS players (
     roles text[] NOT NULL
 );
 ```
-## Amirgali Sanjar 22B030621
